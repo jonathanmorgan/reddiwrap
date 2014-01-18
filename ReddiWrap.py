@@ -824,7 +824,11 @@ class ReddiWrap:
 			existing_link = jres['jquery'][10][3][0]
 			# Return existing link
 			return existing_link
-		link = self.web.between(response, 'call", ["%s://%s/', '"]' % (PROTOCOL, HOST))[0]
+
+		if '.error.BAD_CAPTCHA.field-captcha' in response:
+			return ''
+
+		link = self.web.between(response, 'call", ["%s://%s/' % (PROTOCOL, HOST), '"]')[0]
 		return link
 
 
@@ -849,6 +853,9 @@ class ReddiWrap:
 		response = self.web.post(PROTOCOL + '://' + HOST + '/api/submit', dict)
 		if "You haven't verified your email address" in response:
 			return ''
+		if '.error.BAD_CAPTCHA.field-captcha' in response:
+			return ''
+
 		link = self.web.between(response, 'call", ["%s://%s/' % (PROTOCOL, HOST), '"]')[0]
 		return link
 
