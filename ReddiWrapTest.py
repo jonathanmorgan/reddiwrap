@@ -138,17 +138,17 @@ if MOD_SUB:
 		print(post)
 
 
-# Subscribe to spacedicks!
+# Subscribe to circlejerk!
 subs = reddit.get('/reddits')
 # 'subs' is reddit's huge list of subreddits
 subbed = False
 while not subbed:
     # Iterate over all subreddits
     for sub in subs:
-            if sub.display_name == 'spacedicks':
+            if sub.display_name == 'circlejerk':
                 if not READ_ONLY:
                     reddit.subscribe(sub)
-                    print('subscribed to spacedicks')
+                    print('subscribed to circlejerk')
                 subbed = True
                 break
     if not subbed and reddit.has_next():
@@ -159,13 +159,13 @@ while not subbed:
 
 
 if not READ_ONLY:
-	# Unsub from spacedicks!
+	# Unsub from circlejerk!
 	subs = reddit.get('/reddits/mine')
 	# 'subs' is the user's list of subscribed subreddits
 	for sub in subs:
-		if sub.display_name == 'spacedicks':
+		if sub.display_name == 'circlejerk':
 				reddit.subscribe(sub, unsub=True)
-				print('unsubscribed to spacedicks')
+				print('unsubscribed to circlejerk')
 				break
 
 
