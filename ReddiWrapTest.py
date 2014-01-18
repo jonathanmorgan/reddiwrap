@@ -81,31 +81,32 @@ if MOD_SUB:
 	if len(post.comments) > 0:
 		comment = post.comments[0]
 
+	if not READ_ONLY:
+		# Upvote post
+		reddit.upvote(post)
+		# Upvote comment
+		reddit.upvote(comment)
+		# Save post
+		reddit.save(post)
+
+		# Reply to post
+		print('replying to post "%s"' % (post.title))
+		result = reddit.reply(post, "I can't believe this is in /r/%s" % post.subreddit)
+		if result == {}:
+			print('unable to reply to post')
+		else:
+			print('replied to %s, %s' % (result['parent'], result['id']))
+
+		# Reply to comment
+		print('replying to comment by %s' % (comment.author))
+		result = reddit.reply(comment, "I like the part where you said:\n\n>%s" % comment.body.replace('\n\n', '\n\n>'))
+		if result == {}:
+			print('unable to reply to post')
+		else:
+				print('replied to %s, %s' % (result['parent'], result['id']))
+
+
 if not READ_ONLY:
-	# Upvote post
-	reddit.upvote(post)
-	# Upvote comment
-	reddit.upvote(comment)
-	# Save post
-	reddit.save(post)
-
-	# Reply to post
-	print('replying to post "%s"' % (post.title))
-	result = reddit.reply(post, "I can't believe this is in /r/%s" % post.subreddit)
-	if result == {}:
-		print('unable to reply to post')
-	else:
-		print('replied to %s, %s' % (result['parent'], result['id']))
-
-	# Reply to comment
-	print('replying to comment by %s' % (comment.author))
-	result = reddit.reply(comment, "I like the part where you said:\n\n>%s" % comment.body.replace('\n\n', '\n\n>'))
-	if result == {}:
-		print('unable to reply to post')
-	else:
-		print('replied to %s, %s' % (result['parent'], result['id']))
-
-
 	# Testing submitting link
 	print('submitting link to /r/%s' % MOD_SUB)
 	result = reddit.post_link('best website ever', 'http://derv.us', MOD_SUB)
@@ -137,24 +138,24 @@ if MOD_SUB:
 		print(post)
 
 
-if not READ_ONLY:
-	# Subscribe to spacedicks!
-	subs = reddit.get('/reddits')
-	# 'subs' is reddit's huge list of subreddits
-	subbed = False
-	while not subbed:
-		# Iterate over all subreddits
-		for sub in subs:
-				if sub.display_name == 'spacedicks':
-					reddit.subscribe(sub)
-					print('subscribed to spacedicks')
-					subbed = True
-					break
-		if not subbed and reddit.has_next():
-				print('loading next page of subreddits...')
-				subs = reddit.get_next()
-		else:
-				break
+# Subscribe to spacedicks!
+subs = reddit.get('/reddits')
+# 'subs' is reddit's huge list of subreddits
+subbed = False
+while not subbed:
+    # Iterate over all subreddits
+    for sub in subs:
+            if sub.display_name == 'spacedicks':
+                if not READ_ONLY:
+                    reddit.subscribe(sub)
+                    print('subscribed to spacedicks')
+                subbed = True
+                break
+    if not subbed and reddit.has_next():
+            print('loading next page of subreddits...')
+            subs = reddit.get_next()
+    else:
+            break
 
 
 if not READ_ONLY:
