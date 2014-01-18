@@ -337,6 +337,59 @@ class Message(object):
 		""" Returns string containing all fields and their values. Verbose. """
 		return pretty_string(self.__dict__)
 
+class SubredditCommand:
+    """
+        Encapsulate programatic way to generate .get(/r/subredit/*) urls.
+
+        This class is added ass the attribute r to the ReddiWrap class.
+
+        Examples (assuming reddit = ReddiWrap()):
+            * reddit.r('pics').top()  ==  reddit.get('/r/pics/top')
+            * reddit.r.controversial()  ==  reddit.get('/controversial')
+            * reddit.r.hot() ==  reddit.r('').hot() ==  reddit.get('/')
+            * x = reddit.r('videos'); x.new()  == reddit.get('/r/videos/new')
+    """
+
+    def __init__(self, context, subreddit=None):
+        self.context = context
+        self.subreddit = subreddit
+
+    def __call__(self, subreddit):
+        """ Return an instance of SubredditCommand with subreddit set
+        """
+        self.subreddit = subreddit
+        return SubredditCommand(self.context, subreddit)
+
+    def _make_url(self, command, **kw):
+        """ construct the URL to and return ReddiWrap.get(url) """
+        if self.subreddit:
+            result = "/r/" + self.subreddit
+        else:
+            result = ''
+
+        if command:
+            result += '/' + command
+
+        return self.context.get(result)
+
+    def controversial(self, **kw):
+        return self._make_url('controversial', **kw)
+
+    def hot(self, **kw):
+        return self._make_url('hot', **kw)
+
+    def gilded(self, **kw):
+        return self._make_url('gilded', **kw)
+
+    def new(self, **kw):
+        return self._make_url('new', **kw)
+
+    def rising(self, **kw):
+        return self._make_url('rising', **kw)
+
+    def top(self, **kw):
+        return self._make_url('top', **kw)
+
 
 class ReddiWrap:
 	"""
@@ -365,6 +418,9 @@ class ReddiWrap:
 
 		# Sets instance fields, logs in user if needed.
 		self.login(user, password)
+
+        # allow programatic access to subreddit listings
+		self.r = SubredditCommand(self)
 
 
 
@@ -467,7 +523,7 @@ class ReddiWrap:
 	def get(self, url):
 		"""
 			Returns a list of Post and/or Comment and/or Message and/or Subreddit objects.
-			
+
 			Requesting comments will return a list of Comments. Examples:
 				* .get('/r/all/comments')
 				* .get('/user/godofatheism/comments')
@@ -481,12 +537,12 @@ class ReddiWrap:
 				* .get('/reddits')
 			Requesting messages will return a list of Comment and/or Message objects. Examples:
 				* .get('/message/inbox')
-			
+
 			Returns None if unable to get data from URL.
 			Returns empty list [] if no results are found.
-			
+
 			'url' must be within reddit.com domain.
-			
+
 			This method automatically updates self.modhash so you don't have to.
 		"""
 
@@ -769,7 +825,7 @@ class ReddiWrap:
 			Returns None if unable to retrieve, or [] if no results are found.
 		"""
 		return self.navigate(after=False)
-	
+
 	def get_next(self):
 		"""
 			Go "next" -- retrieve the next 25/50/100 posts. See navigate()
