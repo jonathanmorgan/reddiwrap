@@ -28,6 +28,14 @@ import time               # For getting current... and possibly throttling reque
 PROTOCOL = 'http'         # try 'https' for secure connection
 HOST = 'www.reddit.com'
 
+def makeURL(path, *args):
+    """ Build a url with the given path, and optional args to interpolate """
+    if not path.startswith('/'):
+        path += '/' + path
+    if args:
+        return PROTOCOL + "://" + HOST + path % args
+    return PROTOCOL + "://" + HOST + path
+
 def pretty_string(dict, indent=0):
 	""" Returns string containing all keys and values in a dict. Makes it 'Pretty'. """
 	result = []
@@ -404,7 +412,7 @@ class ReddiWrap:
 		dict['passwd']   = self.password
 		dict['api_type'] = 'json'
 
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/login/%s' % self.user, dict)
+		r = self.web.post(makeURL('/api/login/%s', self.user), dict)
 		if "WRONG_PASSWORD" in r:
 			# Invalid password
 			return 1
@@ -449,7 +457,7 @@ class ReddiWrap:
 		if result == '': result = '/'
 
 		if result.startswith('/'):
-			result = PROTOCOL + '://' + HOST + result
+			result = makeURL(result)
 
 		if not result.startswith(PROTOCOL + '://'):
 			result = PROTOCOL + '://' + result
@@ -606,7 +614,7 @@ class ReddiWrap:
 			dict['id'] = 't1_%s' % post.id
 		dict['dir']  = str(direction)
 		dict['uh']   = self.modhash
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/vote', dict)
+		response = self.web.post(makeURL('/api/vote'), dict)
 		# Reddit should respond with '{}' if vote was successful.
 		return (response == '{}')
 
@@ -671,7 +679,7 @@ class ReddiWrap:
 		elif isinstance(post, Message):
 			dict['thing_id'] = post.name
 
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/comment', dict)
+		response = self.web.post(makeURL('/api/comment'), dict)
 		if '".error.USER_REQUIRED"' in response: return result
 		# Extract appropriate dict out of response
 		jres = json.loads(response)
@@ -814,7 +822,7 @@ class ReddiWrap:
 		dict['title'] = title
 		dict['r']     = subreddit
 		dict['renderstyle'] = 'html'
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/submit', dict)
+		response = self.web.post(makeURL('/api/submit'), dict)
 		if "You haven't verified your email address" in response:
 			return ''
 
@@ -850,7 +858,7 @@ class ReddiWrap:
 		dict['id']     = '#newlink'
 		dict['r']      = subreddit
 		dict['renderstyle'] = 'html'
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/submit', dict)
+		response = self.web.post(makeURL('/api/submit'), dict)
 		if "You haven't verified your email address" in response:
 			return ''
 		if '.error.BAD_CAPTCHA.field-captcha' in response:
@@ -876,7 +884,7 @@ class ReddiWrap:
 		dict['subject']  = subject
 		dict['thing-id'] = ''
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/compose', dict)
+		r = self.web.post(makeURL('/api/compose'), dict)
 		return ('your message has been delivered' in r)
 
 	def mark_message(self, message, mark_as_read=True):
@@ -885,7 +893,7 @@ class ReddiWrap:
 		dict['id'] = message.name
 		dict['uh'] = self.modhash
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/read_message', dict)
+		r = self.web.post(makeURL('/api/read_message'), dict)
 		message.new = not mark_as_read
 
 
@@ -906,9 +914,9 @@ class ReddiWrap:
 			Returns None object if unable to retrieve data.
 		"""
 		if username == None:
-				url = PROTOCOL + '://' + HOST + '/api/me.json'
+				url = makeURL('/api/me.json')
 		else:
-			url = PROTOCOL + '://' + HOST + '/user/%s/about.json' % username
+			url = makeURL('/user/%s/about.json', username)
 		r = self.web.get(url)
 		if r == '' or r == '""': return None # Server gave null response.
 		try:
@@ -923,7 +931,7 @@ class ReddiWrap:
 		dict = {}
 		dict['id'] = post.id
 		dict['uh'] = self.modhash
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/save', dict)
+		response = self.web.post(makeURL('/api/save'), dict)
 		return (response == '{}')
 
 	def unsave(self, post):
@@ -931,7 +939,7 @@ class ReddiWrap:
 		dict = {}
 		dict['id'] = post.id
 		dict['uh'] = self.modhash
-		response = self.web.post(PROTOCOL + '://' + HOSTi + '/api/unsave', dict)
+		response = self.web.post(makeURL( '/api/unsave'), dict)
 		return (response == '{}')
 
 	def hide(self, post):
@@ -940,7 +948,7 @@ class ReddiWrap:
 		dict['id'] = post.id
 		dict['uh'] = self.modhash
 		dict['executed'] = 'hidden'
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/hide', dict)
+		response = self.web.post(makeURL('/api/hide'), dict)
 		return (response == '{}')
 
 	def unhide(self, post):
@@ -949,7 +957,7 @@ class ReddiWrap:
 		dict['id'] = post.id
 		dict['uh'] = self.modhash
 		dict['executed'] = 'unhidden'
-		response = self.web.post(PROTOCOL + '://' + HOST + '/api/unhide', dict)
+		response = self.web.post(makeURL('/api/unhide'), dict)
 		return (response == '{}')
 
 	def report(self, post):
@@ -960,7 +968,7 @@ class ReddiWrap:
 		dict['r']  = post.subreddit
 		dict['executed'] = 'reported'
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/report', dict)
+		r = self.web.post(makeURL('/api/report'), dict)
 		return (r == '{}')
 
 	def share(self, post, from_username, from_email, to_email, message):
@@ -975,7 +983,7 @@ class ReddiWrap:
 		dict['share_to']    = to_email
 		dict['share_from']  = from_username
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/share', dict)
+		r = self.web.post(makeURL('/api/share'), dict)
 		return ('your link has been shared' in r)
 
 	def mark_nsfw(self, post):
@@ -985,7 +993,7 @@ class ReddiWrap:
 		dict['uh']          = self.modhash
 		dict['r']           = post.subreddit
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/marknsfw', dict)
+		r = self.web.post(makeURL('/api/marknsfw'), dict)
 		return (r == '{}')
 
 	def unmark_nsfw(self, post):
@@ -995,7 +1003,7 @@ class ReddiWrap:
 		dict['uh']          = self.modhash
 		dict['r']           = post.subreddit
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/unmarknsfw', dict)
+		r = self.web.post(makeURL('/api/unmarknsfw'), dict)
 		return (r == '{}')
 
 	def subscribe(self, subreddit, unsub=False):
@@ -1007,7 +1015,7 @@ class ReddiWrap:
 		dict['renderstyle'] = 'html'
 		if not unsub: dict['action'] = 'sub'
 		else:         dict['action'] = 'unsub'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/subscribe', dict)
+		r = self.web.post(makeURL('/api/subscribe'), dict)
 		return (r == '{}')
 
 
@@ -1023,7 +1031,7 @@ class ReddiWrap:
 		dict['uh'] = self.modhash
 		dict['r']  = post.subreddit
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/remove', dict)
+		r = self.web.post(makeURL('/api/remove'), dict)
 		return (r == '{}')
 
 	def approve(self, post):
@@ -1033,7 +1041,7 @@ class ReddiWrap:
 		dict['uh'] = self.modhash
 		dict['r']  = post.subreddit
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/approve', dict)
+		r = self.web.post(makeURL('/api/approve'), dict)
 		return (r == '{}')
 
 	def remove(self, post):
@@ -1044,7 +1052,7 @@ class ReddiWrap:
 		dict['r']  = post.subreddit
 		dict['spam'] = 'False'
 		dict['renderstyle'] = 'html'
-		r = self.web.post(PROTOCOL + '://' + HOST + '/api/remove', dict)
+		r = self.web.post(makeURL('/api/remove'), dict)
 		return (r == '{}')
 
 	def distinguish(self, post, turn_on=True):
@@ -1054,7 +1062,7 @@ class ReddiWrap:
 		dict['uh'] = self.modhash
 		dict['r']  = post.subreddit
 		dict['renderstyle'] = 'html'
-		url = PROTOCOL + '://' + HOST + '/api/distinguish/'
+		url = makeURL('/api/distinguish/')
 		if turn_on:
 			url += 'yes'
 		else:
@@ -1077,7 +1085,7 @@ class ReddiWrap:
 		dict['action'] = 'add'
 		dict['container']   = subreddit.name
 		dict['renderstyle'] = 'html'
-		url = PROTOCOL + '://' + HOST + '/api/'
+		url = makeURL('/api/')
 		if add_user: url += 'friend'
 		else:        url += 'unfriend'
 		r = self.web.post(url, dict)
@@ -1098,7 +1106,7 @@ class ReddiWrap:
 		dict['action'] = 'add'
 		dict['container']   = subreddit.name
 		dict['renderstyle'] = 'html'
-		url = PROTOCOL + '://' + HOST + '/api/'
+		url = makeURL('/api/')
 		if add_user: url += 'friend'
 		else:        url += 'unfriend'
 		r = self.web.post(url, dict)
