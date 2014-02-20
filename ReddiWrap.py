@@ -578,16 +578,36 @@ class ReddiWrap:
 		return posts
 
 
-	def fetch_comments(self, post, limit=0):
+	def fetch_comments( self, post, limit = 0, order_IN = "" ):
 		"""
 			Retrieves comments for a given Post.
 			Sets the comments to the given Post object.
 			Can be used to "refresh" comments for a Post.
 			"limit" is the number of posts to grab, uses account's preference as default.
 		"""
+		
+		# declare variables
+		next_separator = "?"
+		
 		# Retrieve Post
 		url = '/r/%s/comments/%s' % (post.subreddit, post.id)
-		if limit != 0: url += '?limit=%d' % (limit)
+
+        # got limit?
+		if limit != 0:
+
+			url += next_separator + 'limit=%d' % (limit)
+			next_separator = "&"
+		
+		#-- END check to see if limit --#
+		
+		# got order?
+		if ( ( order_IN ) and ( order_IN != "" ) ):
+		
+			url += next_separator + "order=" + order_IN
+			next_separator = "&" 
+		
+		#-- END check to see if order passed in. --#
+		    
 		posts = self.get(url)
 		# We only expect 1 result: posts[0]
 		if posts == None or len(posts) == 0: return
